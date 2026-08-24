@@ -574,10 +574,10 @@ window.NEXT_STEP = {
 
   if (editing) {
     var l = document.createElement("link");
-    l.rel = "stylesheet"; l.href = "editor.css?v=18";
+    l.rel = "stylesheet"; l.href = "editor.css?v=19";
     document.head.appendChild(l);
     var s = document.createElement("script");
-    s.src = "editor.js?v=18";
+    s.src = "editor.js?v=19";
     document.body.appendChild(s);
     return;
   }
@@ -621,6 +621,18 @@ window.NEXT_STEP = {
       reorders.forEach(function (e) {
         var c = byEid(e.eid); if (!c || !Array.isArray(e.order)) return;
         e.order.forEach(function (id) { var ch = byEid(id); if (ch && ch.parentElement === c) c.appendChild(ch); });
+      });
+      // attributes: links, and which button opens the pop-up
+      var ATTR_OK = ["href","target","rel","data-buy","src","alt"];
+      d.edits.forEach(function (e) {
+        if (!e || !e.attrs || !e.eid) return;
+        var el = byEid(e.eid); if (!el) return;
+        var gone = (e.attrs["-removed"] || "").split(",");
+        Object.keys(e.attrs).forEach(function (k) {
+          if (k === "-removed" || ATTR_OK.indexOf(k) === -1) return;
+          el.setAttribute(k, e.attrs[k]);
+        });
+        gone.forEach(function (k) { if (k && ATTR_OK.indexOf(k) !== -1) el.removeAttribute(k); });
       });
       removals.forEach(function (id) { var el = byEid(id); if (el && el.parentNode) el.parentNode.removeChild(el); });
       if (css.length) {

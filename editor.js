@@ -263,13 +263,14 @@
   // ── Apply / capture ──────────────────────────────────────────────────────
   function applyEdits(arr) {
     if (!Array.isArray(arr)) return;
-    var patches = [], inserts = [], reorders = [], removals = [], cssItems = [];
+    var patches = [], inserts = [], reorders = [], removals = [], cssItems = [], attrsList = [];
     arr.forEach(function (it) {
       if (!it) return;
       if (it.css && it.eid && it.props && (it.d === "m" || it.d === "d")) cssItems.push(it);
       else if (it.insert) inserts.push(it);
       else if (it.reorder) reorders.push(it);
       else if (it.removed && it.eid) removals.push(it.eid);
+      else if (it.attrs && it.eid) attrsList.push(it);
       else if (it.eid) patches.push(it);
     });
     // 1) content + style on existing elements
@@ -283,6 +284,18 @@
           var fn = fontNameFromCss(el.style.fontFamily); if (fn) loadFont(fn);
         }
       } catch (e) { try { console.warn("[jv-editor] skipped bad patch", it && it.eid, e); } catch (e2) {} }
+    });
+    // 1b) attributes — links, and which button opens the pop-up
+    attrsList.forEach(function (it) {
+      var el = byEid(it.eid); if (!el) return;
+      var gone = (it.attrs["-removed"] || "").split(",");
+      Object.keys(it.attrs).forEach(function (k) {
+        if (k === "-removed") return;
+        if (ATTR_KEYS.indexOf(k) === -1) return;              // ignore anything unexpected
+        el.setAttribute(k, it.attrs[k]);
+      });
+      gone.forEach(function (k) { if (k && ATTR_KEYS.indexOf(k) !== -1) el.removeAttribute(k); });
+      el.setAttribute("data-edited-attr", "1");
     });
     // 2) inserts (new / duplicated blocks)
     inserts.forEach(function (it) {
@@ -330,6 +343,15 @@
     editable().forEach(function (el) {
       if (inIns(el)) return;
       arr.push({ eid: el.getAttribute("data-eid"), html: normNbsp(el.innerHTML), style: cleanStyle(el) });
+    });
+    // Attributes (href, target, data-buy…) are not part of innerHTML when the
+    // element itself is the edited leaf, so they need their own record.
+    document.querySelectorAll("[data-edited-attr]").forEach(function (el) {
+      if (el.hasAttribute("data-ins") || inIns(el)) return;
+      var out = {};
+      ATTR_KEYS.forEach(function (k) { if (el.hasAttribute(k)) out[k] = el.getAttribute(k); });
+      out["-removed"] = ATTR_KEYS.filter(function (k) { return !el.hasAttribute(k); }).join(",");
+      arr.push({ eid: el.getAttribute("data-eid"), attrs: out });
     });
     document.querySelectorAll("[data-edited-style]").forEach(function (el) {
       if (el.hasAttribute("data-etext")) return;
@@ -451,6 +473,9 @@
     var m = (rgb || "").match(/\d+/g); if (!m) return "#000000";
     return "#" + m.slice(0, 3).map(function (n) { var h = parseInt(n, 10).toString(16); return h.length === 1 ? "0" + h : h; }).join("");
   }
+  // Only these are ever published — never anything that could inject script.
+  var ATTR_KEYS = ["href", "target", "rel", "data-buy", "src", "alt"];
+  function markAttr(el) { if (el) el.setAttribute("data-edited-attr", "1"); }
   function markStyled(el) { if (el && !el.hasAttribute("data-etext")) el.setAttribute("data-edited-style", "1"); }
 
   // ── Mobile-canvas bridge ────────────────────────────────────────────────
@@ -1287,6 +1312,103 @@
     if (t.el !== hoverEl || !hoverTools.classList.contains("show")) showHoverFor(t.el, t.kind);
   }
 
+
+  // ── What a button does ───────────────────────────────────────────────────
+  // Three answers cover everything on these pages: open the pop-up, go to a
+  // link, or scroll to a section. Whatever is chosen is stored as attributes,
+  // which now publish.
+  var actionMenu = null;
+  function closeActionMenu() { if (actionMenu) { actionMenu.remove(); actionMenu = null; } }
+  function targetLink(el) {
+    if (!el || !el.closest) return null;
+    if (el.matches && el.matches("a,button")) return el;
+    return el.closest("a,button") || el.querySelector("a,button");
+  }
+  function applyAction(el, kind, value) {
+    pushUndo();
+    if (kind === "popup") {
+      el.setAttribute("data-buy", "1");
+      if (el.tagName === "A") el.setAttribute("href", "#start");
+      el.removeAttribute("target"); el.removeAttribute("rel"); el.removeAttribute("onclick");
+      flash("This button now opens the pop-up");
+    } else if (kind === "link") {
+      el.removeAttribute("data-buy"); el.removeAttribute("onclick");
+      el.setAttribute("href", value);
+      if (/^https?:/i.test(value) && value.indexOf(location.host) === -1) {
+        el.setAttribute("target", "_blank"); el.setAttribute("rel", "noopener");
+      } else { el.removeAttribute("target"); el.removeAttribute("rel"); }
+      flash("This button now goes to " + value);
+    } else if (kind === "scroll") {
+      el.removeAttribute("data-buy"); el.removeAttribute("onclick");
+      el.removeAttribute("target"); el.removeAttribute("rel");
+      el.setAttribute("href", value);
+      flash("This button now scrolls to " + value);
+    }
+    markAttr(el);
+    scheduleDraft();
+  }
+  function sectionChoices() {
+    var out = [];
+    document.querySelectorAll("section[id], [id][data-eid]").forEach(function (s) {
+      if (!s.id || s.closest(".jv-toolbar, .jv-outline, .cp")) return;
+      if (out.length > 11) return;
+      var h = s.querySelector("h1,h2,h3");
+      var label = (h ? h.textContent : s.id).replace(/\s+/g, " ").trim().slice(0, 34);
+      if (label) out.push({ id: s.id, label: label });
+    });
+    return out;
+  }
+  function openActionMenu(el, anchorRect) {
+    closeActionMenu();
+    var link = targetLink(el);
+    if (!link) { flash("Point at a button or a link first"); return; }
+    var m = document.createElement("div");
+    m.className = "jv-actions";
+    m.setAttribute("data-noedit", "");
+    var now = link.hasAttribute("data-buy") ? "popup"
+            : (link.getAttribute("href") || "").charAt(0) === "#" ? "scroll" : "link";
+    m.innerHTML =
+      '<div class="jv-act-h">What should this button do?</div>' +
+      '<button type="button" class="jv-act" data-k="popup">' + (now === "popup" ? "✓ " : "") + 'Open the pop-up</button>' +
+      '<button type="button" class="jv-act" data-k="link">' + (now === "link" ? "✓ " : "") + 'Go to a link…</button>' +
+      '<button type="button" class="jv-act" data-k="scroll">' + (now === "scroll" ? "✓ " : "") + 'Scroll to a section…</button>' +
+      '<div class="jv-act-now">Now: ' + (now === "popup" ? "opens the pop-up" : (link.getAttribute("href") || "nothing")) + '</div>';
+    document.body.appendChild(m);
+    var top = (anchorRect ? anchorRect.bottom : 80) + 8, left = anchorRect ? anchorRect.left : 40;
+    m.style.top = Math.min(top, window.innerHeight - 190) + "px";
+    m.style.left = Math.max(8, Math.min(left, window.innerWidth - 240)) + "px";
+    actionMenu = m;
+
+    m.addEventListener("click", function (e) {
+      var b = e.target.closest(".jv-act"); if (!b) return;
+      e.stopPropagation(); e.preventDefault();
+      var k = b.getAttribute("data-k");
+      if (k === "popup") { applyAction(link, "popup"); closeActionMenu(); return; }
+      if (k === "link") {
+        var u = prompt("Link to where?\n\nA full address (trtguy.com), a page on this site\n(pay.html), or an email address.", link.getAttribute("href") || "");
+        closeActionMenu();
+        if (u === null) return;
+        u = normalizeUrl(u); if (!u) return;
+        applyAction(link, "link", u); return;
+      }
+      // scroll: replace the menu with the list of sections
+      var choices = sectionChoices();
+      m.innerHTML = '<div class="jv-act-h">Scroll to which section?</div>' +
+        (choices.length ? choices.map(function (c) {
+          return '<button type="button" class="jv-act" data-id="#' + c.id + '">' + c.label + '</button>';
+        }).join("") : '<div class="jv-act-now">This page has no named sections yet.</div>');
+      m.addEventListener("click", function (e2) {
+        var c = e2.target.closest("[data-id]"); if (!c) return;
+        e2.stopPropagation(); e2.preventDefault();
+        applyAction(link, "scroll", c.getAttribute("data-id"));
+        closeActionMenu();
+      });
+    });
+  }
+  document.addEventListener("click", function (e) {
+    if (actionMenu && !e.target.closest(".jv-actions") && !e.target.closest(".jv-ht-link")) closeActionMenu();
+  }, true);
+
   // ── Add a section below the block you're pointing at ─────────────────────
   // Inserting "afterend" of whatever was selected dropped new sections inside
   // cards and list items. Climb to the block that actually sits in the page's
@@ -1401,14 +1523,19 @@
     hoverTools.className = "jv-hover-tools";
     hoverTools.innerHTML =
       '<button type="button" class="jv-ht jv-ht-add" title="Add a new section directly below this">＋</button>' +
-      '<button type="button" class="jv-ht jv-ht-link" title="Set where this button or link goes">🔗</button>' +
+      '<button type="button" class="jv-ht jv-ht-link" title="What this button does — pop-up, link, or scroll">⚡</button>' +
       '<button type="button" class="jv-ht jv-ht-dup" title="Duplicate">⧉</button>' +
       '<button type="button" class="jv-ht jv-ht-drag" title="Drag to reorder" draggable="true">✥</button>' +
       '<button type="button" class="jv-ht jv-ht-del" title="Delete">🗑</button>';
     document.body.appendChild(hoverTools);
     hoverTools.addEventListener("mouseenter", function () { clearTimeout(hoverHideTimer); });
     hoverTools.addEventListener("mouseleave", scheduleHoverHide);
-    hoverTools.querySelector(".jv-ht-link").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); if (!hoverEl) return; editHref(hoverNode && hoverNode.closest && hoverNode.closest("a") ? hoverNode : hoverEl); hideHoverTools(); });
+    hoverTools.querySelector(".jv-ht-link").addEventListener("click", function (e) {
+      e.stopPropagation(); e.preventDefault();
+      if (!hoverEl) return;
+      var el = (hoverNode && hoverNode.closest && hoverNode.closest("a,button")) ? hoverNode.closest("a,button") : hoverEl;
+      openActionMenu(el, hoverTools.getBoundingClientRect());
+    });
     hoverTools.querySelector(".jv-ht-add").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); if (!hoverEl) return; addSectionBelow(hoverNode || hoverEl); hideHoverTools(); });
     hoverTools.querySelector(".jv-ht-dup").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); if (!hoverEl) return; setActive(hoverEl); duplicateActive(); hideHoverTools(); });
     hoverTools.querySelector(".jv-ht-del").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); if (!hoverEl) return; removeActive(hoverEl, true); hideHoverTools(); });
