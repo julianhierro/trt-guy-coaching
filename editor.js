@@ -1256,7 +1256,7 @@
   }
   function hoverTargetFrom(node) {
     if (!node || !node.closest) return null;
-    if (node.closest(".jv-hover-tools, .jv-toolbar, .jv-launcher, .jv-addmenu, .jv-section-tools, .jv-faq-tools, .jv-faq-adder, .jv-inserter, .jv-outline, .jv-outline-toggle, #jv-result")) return null;
+    if (node.closest(".jv-hover-tools, .jv-toolbar, .jv-launcher, .jv-addmenu, .jv-section-tools, .jv-faq-tools, .jv-faq-adder, .jv-inserter, .jv-actions, .jv-outline, .jv-outline-toggle, #jv-result")) return null;
     var img = node.closest(".transform-img");
     if (img) return { el: img, kind: "img" };
     var card = node.closest(".review-card, .testimonial-card, .plan-card, .pricing-card, .faq-item");
@@ -1934,7 +1934,7 @@
     document.addEventListener("focusin", function (e) { var el = e.target.closest && e.target.closest("[data-eid]"); if (el) setActive(el); });
     document.addEventListener("click", function (e) {
       if (!editMode) return;
-      if (e.target.closest && e.target.closest(".jv-toolbar, .jv-launcher, .jv-addmenu, .jv-faq-adder, .jv-faq-tools, .jv-hover-tools, .jv-section-tools, .jv-inserter, .jv-outline, .jv-outline-toggle, .jv-preview-overlay")) return;
+      if (e.target.closest && e.target.closest(".jv-toolbar, .jv-launcher, .jv-addmenu, .jv-faq-adder, .jv-faq-tools, .jv-hover-tools, .jv-section-tools, .jv-inserter, .jv-actions, .jv-outline, .jv-outline-toggle, .jv-preview-overlay")) return;
       var clickable = e.target.closest && e.target.closest("a, button");
       // In-page nav links (href="#section") are left ALONE so the page's own nav /
       // smooth-scroll runs and you can jump between sections while editing. We also
