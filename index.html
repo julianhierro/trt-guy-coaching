@@ -765,22 +765,22 @@ var ASSET = 'coaching.html';
 
 
 <!-- The buy pop-up. Hidden until Start Now is clicked. Editable in place. -->
-<div class="cp" id="cpModal">
-  <div class="cp-box" id="cpBox">
-    <div class="cp-head">
+<div class="cp" id="cpModal" data-eid="cp-modal">
+  <div class="cp-box" id="cpBox" data-eid="cp-box">
+    <div class="cp-head" data-eid="cp-head">
       <div>
-        <div class="cp-t" id="cpT">Start coaching</div>
-        <div class="cp-s" id="cpS">$125 per week &middot; cancel any week</div>
+        <div class="cp-t" id="cpT" data-eid="cp-title">Start coaching</div>
+        <div class="cp-s" id="cpS" data-eid="cp-sub">$125 per week &middot; cancel any week</div>
       </div>
       <button class="cp-x" type="button" id="cpX" aria-label="Close" data-noedit>&times;</button>
     </div>
-    <div class="cp-body" id="cpBody">
-      <form id="cpForm" novalidate>
-        <label class="cp-lbl" for="cpMail">Enter your email to start</label>
+    <div class="cp-body" id="cpBody" data-eid="cp-body">
+      <form id="cpForm" novalidate data-eid="cp-form">
+        <label class="cp-lbl" for="cpMail" data-eid="cp-label">Enter your email to start</label>
         <input class="cp-in" id="cpMail" name="email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" data-noedit>
         <p class="cp-err" id="cpErr" data-noedit></p>
-        <button class="cp-go" id="cpGo" type="submit">Continue to payment</button>
-        <p class="cp-note">So I can send your receipt and the intake form. Payment details come next.</p>
+        <button class="cp-go" id="cpGo" type="submit" data-eid="cp-button">Continue to payment</button>
+        <p class="cp-note" data-eid="cp-note">So I can send your receipt and the intake form. Payment details come next.</p>
       </form>
     </div>
   </div>
