@@ -1348,13 +1348,19 @@
     scheduleDraft();
   }
   function sectionChoices() {
-    var out = [];
-    document.querySelectorAll("section[id], [id][data-eid]").forEach(function (s) {
-      if (!s.id || s.closest(".jv-toolbar, .jv-outline, .cp")) return;
-      if (out.length > 11) return;
+    var out = [], seen = {};
+    var SKIP = { A:1, BUTTON:1, INPUT:1, IMG:1, HEADER:1, FOOTER:1, NAV:1, FORM:1, LABEL:1 };
+    document.querySelectorAll("[id]").forEach(function (s) {
+      if (out.length > 11 || !s.id || seen[s.id]) return;
+      if (SKIP[s.tagName]) return;
+      if (s.closest(".jv-toolbar, .jv-outline, .jv-actions, .cp, [data-noedit]")) return;
       var h = s.querySelector("h1,h2,h3");
+      // a place on the page is either a real <section> or something with a heading
+      if (s.tagName !== "SECTION" && !h) return;
       var label = (h ? h.textContent : s.id).replace(/\s+/g, " ").trim().slice(0, 34);
-      if (label) out.push({ id: s.id, label: label });
+      if (!label) return;
+      seen[s.id] = 1;
+      out.push({ id: s.id, label: label });
     });
     return out;
   }
