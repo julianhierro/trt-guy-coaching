@@ -316,7 +316,8 @@ body.jv-editing .gal figure{cursor:default}
   window.__jvRelease = release;
   if (!knownCurrent) {
     document.documentElement.classList.add("jv-hold");
-    setTimeout(release, 700);                // hard cap — a slow network can't hide the page
+    setTimeout(release, 3000);               // only a first-ever visit waits here; every later
+                                             // visit replays from cache and never holds at all
   }
   window.__jvFresh = cfg ? fetch(cfg.api + "?site=" + encodeURIComponent(cfg.site) + "&page=" + (cfg.page || 1) + "&t=" + Date.now(), { cache: "no-store" })
     .then(function (r) { return r.ok ? r.json() : null; })
