@@ -585,72 +585,88 @@ window.NEXT_STEP = {
   var cfg = window.JV_EDITOR || {};
   if (!cfg.api || !cfg.site) { if (window.__jvRelease) window.__jvRelease(); return; }
   var baked = window.JV_BAKED_AT || "";
+  var CACHE = "jv-edits:" + cfg.site;
+
+  var ATTR_OK = ["href","target","rel","data-buy","src","alt"];
+  var byEid = function (id) { return id ? document.querySelector('[data-eid="' + id + '"]') : null; };
+
+  // Same order the editor applies them in: patch, insert, reorder, attrs, remove.
+  function applyAll(edits) {
+    if (!Array.isArray(edits)) return;
+    var patches = [], inserts = [], reorders = [], removals = [], css = [], attrs = [];
+    edits.forEach(function (e) {
+      if (!e) return;
+      if (e.css && e.eid && e.props && (e.d === "m" || e.d === "d")) css.push(e);
+      else if (e.insert) inserts.push(e);
+      else if (e.reorder) reorders.push(e);
+      else if (e.removed && e.eid) removals.push(e.eid);
+      else if (e.attrs && e.eid) attrs.push(e);
+      else if (e.eid) patches.push(e);
+    });
+    patches.forEach(function (e) {
+      var el = byEid(e.eid); if (!el) return;
+      if (typeof e.html === "string") el.innerHTML = e.html;
+      if (typeof e.style === "string") el.setAttribute("style", e.style);
+    });
+    inserts.forEach(function (e) {
+      if (!e.id || typeof e.html !== "string" || byEid(e.id)) return;
+      var tmp = document.createElement("div"); tmp.innerHTML = e.html.trim();
+      var node = tmp.firstElementChild; if (!node) return;
+      var after = byEid(e.afterEid), parent = byEid(e.parentEid);
+      if (after && after.parentNode) after.parentNode.insertBefore(node, after.nextSibling);
+      else if (parent) parent.appendChild(node);
+    });
+    reorders.forEach(function (e) {
+      var c = byEid(e.eid); if (!c || !Array.isArray(e.order)) return;
+      e.order.forEach(function (id) { var ch = byEid(id); if (ch && ch.parentElement === c) c.appendChild(ch); });
+    });
+    attrs.forEach(function (e) {
+      var el = byEid(e.eid); if (!el) return;
+      var gone = (e.attrs["-removed"] || "").split(",");
+      Object.keys(e.attrs).forEach(function (k) {
+        if (k === "-removed" || ATTR_OK.indexOf(k) === -1) return;
+        el.setAttribute(k, e.attrs[k]);
+      });
+      gone.forEach(function (k) { if (k && ATTR_OK.indexOf(k) !== -1) el.removeAttribute(k); });
+    });
+    removals.forEach(function (id) { var el = byEid(id); if (el && el.parentNode) el.parentNode.removeChild(el); });
+    if (css.length) {
+      var sheet = "", media = { m: "@media (max-width:767px)", d: "@media (min-width:1024px)" };
+      ["m", "d"].forEach(function (k) {
+        var items = css.filter(function (c) { return c.d === k; });
+        if (!items.length) return;
+        sheet += media[k] + "{";
+        items.forEach(function (c) {
+          sheet += '[data-eid="' + c.eid + '"]{';
+          Object.keys(c.props).forEach(function (p) { sheet += p + ":" + c.props[p] + " !important;"; });
+          sheet += "}";
+        });
+        sheet += "}";
+      });
+      if (sheet) { var st = document.createElement("style"); st.textContent = sheet; document.head.appendChild(st); }
+    }
+  }
+
+  // ── 1. replay the cached copy synchronously, before the browser paints ──
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem(CACHE) || "null"); } catch (e) {}
+  if (cached && Array.isArray(cached.edits) && (!baked || cached.updatedAt > baked)) {
+    try { applyAll(cached.edits); } catch (e) {}
+  }
+  if (window.__jvRelease) window.__jvRelease();     // nothing left to wait for
+
+  // ── 2. revalidate in the background; only touch the page if it changed ──
   (window.__jvFresh || Promise.resolve(null))
     .then(function (d) {
       if (!d || !d.updatedAt || !Array.isArray(d.edits)) return;
       var current = baked && d.updatedAt <= baked;
-      try { if (current) localStorage.setItem(window.__jvFreshKey, baked);
-            else localStorage.removeItem(window.__jvFreshKey); } catch (e) {}
-      if (current) return;                            // the HTML is already current
-
-      // Same order the editor applies them in: patch, insert, reorder, remove.
-      // Anything less and a visitor sees blocks the owner already deleted.
-      var byEid = function (id) { return id ? document.querySelector('[data-eid="' + id + '"]') : null; };
-      var patches = [], inserts = [], reorders = [], removals = [], css = [];
-      d.edits.forEach(function (e) {
-        if (!e) return;
-        if (e.css && e.eid && e.props && (e.d === "m" || e.d === "d")) css.push(e);
-        else if (e.insert) inserts.push(e);
-        else if (e.reorder) reorders.push(e);
-        else if (e.removed && e.eid) removals.push(e.eid);
-        else if (e.eid) patches.push(e);
-      });
-      patches.forEach(function (e) {
-        var el = byEid(e.eid); if (!el) return;
-        if (typeof e.html === "string") el.innerHTML = e.html;
-        if (typeof e.style === "string") el.setAttribute("style", e.style);
-      });
-      inserts.forEach(function (e) {
-        if (!e.id || typeof e.html !== "string" || byEid(e.id)) return;
-        var tmp = document.createElement("div"); tmp.innerHTML = e.html.trim();
-        var node = tmp.firstElementChild; if (!node) return;
-        var after = byEid(e.afterEid), parent = byEid(e.parentEid);
-        if (after && after.parentNode) after.parentNode.insertBefore(node, after.nextSibling);
-        else if (parent) parent.appendChild(node);
-      });
-      reorders.forEach(function (e) {
-        var c = byEid(e.eid); if (!c || !Array.isArray(e.order)) return;
-        e.order.forEach(function (id) { var ch = byEid(id); if (ch && ch.parentElement === c) c.appendChild(ch); });
-      });
-      // attributes: links, and which button opens the pop-up
-      var ATTR_OK = ["href","target","rel","data-buy","src","alt"];
-      d.edits.forEach(function (e) {
-        if (!e || !e.attrs || !e.eid) return;
-        var el = byEid(e.eid); if (!el) return;
-        var gone = (e.attrs["-removed"] || "").split(",");
-        Object.keys(e.attrs).forEach(function (k) {
-          if (k === "-removed" || ATTR_OK.indexOf(k) === -1) return;
-          el.setAttribute(k, e.attrs[k]);
-        });
-        gone.forEach(function (k) { if (k && ATTR_OK.indexOf(k) !== -1) el.removeAttribute(k); });
-      });
-      removals.forEach(function (id) { var el = byEid(id); if (el && el.parentNode) el.parentNode.removeChild(el); });
-      if (css.length) {
-        var sheet = "";
-        var media = { m: "@media (max-width:767px)", d: "@media (min-width:1024px)" };
-        ["m", "d"].forEach(function (k) {
-          var items = css.filter(function (c) { return c.d === k; });
-          if (!items.length) return;
-          sheet += media[k] + "{";
-          items.forEach(function (c) {
-            sheet += '[data-eid="' + c.eid + '"]{';
-            Object.keys(c.props).forEach(function (p) { sheet += p + ":" + c.props[p] + " !important;"; });
-            sheet += "}";
-          });
-          sheet += "}";
-        });
-        if (sheet) { var st = document.createElement("style"); st.textContent = sheet; document.head.appendChild(st); }
-      }
+      try {
+        if (current) { localStorage.setItem(window.__jvFreshKey, baked); localStorage.removeItem(CACHE); }
+        else { localStorage.setItem(CACHE, JSON.stringify({ updatedAt: d.updatedAt, edits: d.edits })); }
+      } catch (e) {}
+      if (current) return;                          // the file is already right
+      if (cached && cached.updatedAt === d.updatedAt) return;   // already replayed from cache
+      applyAll(d.edits);
     })
     .catch(function () {})
     .then(function () { if (window.__jvRelease) window.__jvRelease(); });
