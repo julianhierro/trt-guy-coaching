@@ -407,7 +407,12 @@ body.pm-locked{overflow:hidden}
   window.__jvFreshKey = "jv-fresh:" + (cfg ? cfg.site : "");
   var stamp = window.JV_BAKED_AT || "none";
   var knownCurrent = false;
-  try { knownCurrent = localStorage.getItem(window.__jvFreshKey) === stamp; } catch (e) {}
+  try {
+    var hasCache = !!localStorage.getItem("jv-edits:" + (cfg ? cfg.site : ""));
+    // Cached edits mean this file is behind the published copy, whatever any
+    // older freshness flag claims. Hold either way — the replay is synchronous.
+    knownCurrent = !hasCache && localStorage.getItem(window.__jvFreshKey) === stamp;
+  } catch (e) {}
   var release = function () { document.documentElement.classList.remove("jv-hold"); };
   window.__jvRelease = release;
   if (!knownCurrent) {
