@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Four Pillars — TRT Guy</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff; --bg-2:#f5f7fa; --card:#fff; --line:#e6e9ee; --line-2:#d7dbe2;
+  --txt:#0b0d10; --mut:#5a6270; --acc:#1a5cff; --acc-d:#0f3fb0;
+  --acc-soft:rgba(26,92,255,.08); --r:16px;
+  --display:"Barlow Condensed",Impact,Haettenschweiler,"Arial Narrow",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);
+  font:400 16px/1.6 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* preview banner — not on the live page */
+.draft{background:#fff8e1;border-bottom:1px solid #ffe0a3;color:#7a5b00;
+  font:600 13px/1.45 Inter,sans-serif;text-align:center;padding:10px 16px}
+
+.head{text-align:center;padding:clamp(44px,6vw,78px) 0 clamp(26px,3.4vw,40px)}
+.kicker{display:flex;align-items:center;justify-content:center;gap:11px;
+  font:600 13px/1 Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:0 0 16px}
+.kdash{flex:none;width:26px;height:2px;background:var(--acc);border-radius:2px;display:inline-block}
+h1{font-family:var(--display);font-size:clamp(34px,5.4vw,62px);line-height:1.04;margin:0 0 16px;
+  letter-spacing:.01em;text-transform:uppercase}
+.lede{max-width:60ch;margin:0 auto;color:var(--mut);font-size:clamp(16px,1.8vw,18.5px);line-height:1.65}
+
+/* the four pillars */
+.pillars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,2vw,24px);
+  padding-bottom:clamp(30px,4vw,48px)}
+@media(max-width:820px){.pillars{grid-template-columns:minmax(0,1fr)}}
+
+.pillar{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:clamp(26px,3vw,36px);overflow:hidden;
+  box-shadow:0 12px 34px rgba(11,13,16,.06);transition:transform .18s ease,box-shadow .18s ease}
+.pillar:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(11,13,16,.10)}
+.pillar::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--acc)}
+
+.p-top{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.p-num{font-family:var(--display);font-size:clamp(40px,4.6vw,54px);line-height:.9;color:var(--acc);opacity:.28}
+.p-ico{flex:none;width:56px;height:56px;border-radius:15px;background:var(--acc-soft);
+  display:flex;align-items:center;justify-content:center;color:var(--acc)}
+.p-ico svg{width:30px;height:30px}
+
+.pillar h2{font-size:clamp(21px,2.3vw,25px);line-height:1.16;margin:0 0 11px}
+.pillar .p-said{margin:0 0 14px;font-size:16px;line-height:1.6;color:var(--txt);font-weight:500}
+.pillar p{margin:0 0 14px;color:var(--mut);font-size:15.5px;line-height:1.65}
+.pillar p:last-child{margin-bottom:0}
+
+.p-metric{display:flex;align-items:center;gap:9px;margin-top:18px;padding-top:16px;
+  border-top:1px solid var(--line);font:600 13px/1.4 Inter,sans-serif;color:var(--acc-d)}
+.p-metric svg{flex:none;width:16px;height:16px}
+
+/* how they fit together */
+.tie{background:var(--bg-2);border-top:1px solid var(--line);padding:clamp(40px,5vw,68px) 0}
+.tie-in{max-width:760px;margin:0 auto;text-align:center}
+.tie h2{font-size:clamp(23px,2.8vw,31px);line-height:1.18;margin:0 0 14px}
+.tie p{color:var(--mut);font-size:16.5px;line-height:1.7;margin:0 auto;max-width:58ch}
+.chain{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:26px}
+.chain span{padding:9px 15px;border-radius:999px;background:#fff;border:1px solid var(--line-2);
+  font:600 13.5px/1 Inter,sans-serif}
+.chain i{color:var(--mut);font-style:normal}
+
+.foot{text-align:center;padding:clamp(34px,4vw,56px) 0}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--acc);color:#fff;
+  text-decoration:none;font:700 16px/1 Inter,sans-serif;padding:17px 30px;border-radius:11px}
+.btn:hover{background:var(--acc-d)}
+.foot p{color:var(--mut);font-size:14px;margin:14px 0 0}
+</style>
+</head>
+<body>
+
+<div class="draft">Draft for review — this page isn't linked from the site yet. Pillar 4 is my suggestion; swap it for whatever you had in mind.</div>
+
+<header class="head">
+  <div class="wrap">
+    <p class="kicker"><i class="kdash"></i>What we're actually building</p>
+    <h1>The Four Pillars</h1>
+    <p class="lede">Every plan I write is aimed at these four things. Not a look for one weekend
+      in summer &mdash; a body that works, and keeps working, for the next thirty years.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="pillars">
+
+    <article class="pillar">
+      <div class="p-top">
+        <span class="p-num">01</span>
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a4 4 0 0 1 4 4c0 2-1 3-1 5s1 3 1 5a4 4 0 0 1-8 0c0-2 1-3 1-5s-1-3-1-5a4 4 0 0 1 4-4z"/>
+            <path d="M4 12h2M18 12h2"/>
+          </svg>
+        </span>
+      </div>
+      <h2>Improved body composition</h2>
+      <p class="p-said">I'll get you to a level of body fat that's actually healthy.</p>
+      <p>Not shredded for one photo and miserable by Thursday. A body fat level you can hold all
+        year without living out of a Tupperware or turning down dinner with your family.</p>
+      <p>That's usually the difference between a man who looks like he trains and a man who's
+        just thinner than he used to be.</p>
+      <div class="p-metric">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        How we track it: waist, weight and photos &mdash; not the scale alone
+      </div>
+    </article>
+
+    <article class="pillar">
+      <div class="p-top">
+        <span class="p-num">02</span>
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 6.5h11v11h-11z"/><path d="M3 9v6M21 9v6M6.5 12h11"/>
+          </svg>
+        </span>
+      </div>
+      <h2>Gain muscle mass</h2>
+      <p class="p-said">The goal isn't to look like a bodybuilder. It's strong, lean and healthy.</p>
+      <p>For that you need a real amount of muscle &mdash; enough that your shirt sits the way you
+        want it to, and enough that everyday life never becomes a problem.</p>
+      <p>Carrying both kids up the stairs, moving furniture on a Saturday, getting off the floor
+        without thinking about it. Muscle is what makes all of that unremarkable.</p>
+      <div class="p-metric">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        How we track it: strength going up while your waist doesn't
+      </div>
+    </article>
+
+    <article class="pillar">
+      <div class="p-top">
+        <span class="p-num">03</span>
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z"/>
+            <path d="M2 13h4l2-3 2.5 6 2-4.5 1.5 1.5h4" stroke-width="1.6"/>
+          </svg>
+        </span>
+      </div>
+      <h2>Cardiovascular capacity</h2>
+      <p class="p-said">Heart disease is the leading cause of death in the world. A strong engine is
+        the best protection you can build.</p>
+      <p>This is the pillar men skip because it isn't visible in the mirror. It's also the one
+        most likely to decide how long you're around for.</p>
+      <p>You'll feel it long before any test does &mdash; stairs stop registering, you're not wrecked
+        after a game with your kids, and your resting heart rate quietly drops.</p>
+      <div class="p-metric">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        How we track it: resting heart rate, and what you can do without stopping
+      </div>
+    </article>
+
+    <article class="pillar">
+      <div class="p-top">
+        <span class="p-num">04</span>
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3h6v4a5 5 0 0 1-1 3l-1 1a4 4 0 0 0-1 3v5a3 3 0 0 1-6 0v-5a4 4 0 0 0-1-3l-1-1a5 5 0 0 1-1-3V3h6z" transform="translate(3 0)"/>
+            <path d="M8 13h8" stroke-width="1.6"/>
+          </svg>
+        </span>
+      </div>
+      <h2>Bloodwork and hormones</h2>
+      <p class="p-said">Everything above is guesswork until someone reads your labs properly.</p>
+      <p>Your panel tells us what's actually happening &mdash; hormones, thyroid, liver, lipids,
+        markers most men have never had explained to them. Your supplements get chosen from that,
+        not from a shelf.</p>
+      <p>I don't prescribe and I won't pretend to. What I do is read it, tell you what I'd be
+        asking about, and give you something specific to take back to your doctor.</p>
+      <div class="p-metric">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        How we track it: a panel before we start, and again 6&ndash;8 weeks in
+      </div>
+    </article>
+
+  </section>
+</main>
+
+<section class="tie">
+  <div class="wrap">
+    <div class="tie-in">
+      <h2>They only work together</h2>
+      <p>Lose fat without building muscle and you end up smaller, softer and weaker. Build muscle
+        without the engine and you get out of breath carrying it. Do all of it without reading
+        your bloodwork and you're guessing at the one thing you can't see.</p>
+      <div class="chain">
+        <span>Leaner</span><i>+</i><span>Stronger</span><i>+</i><span>Fitter</span><i>+</i><span>Measured</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <a class="btn" href="./" >Back to the coaching page <span>&rarr;</span></a>
+    <p>Draft &mdash; nothing here is live on the site yet.</p>
+  </div>
+</footer>
+
+</body>
+</html>
