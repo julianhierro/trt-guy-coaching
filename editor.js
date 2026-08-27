@@ -980,8 +980,20 @@
             && el.tagName !== "SCRIPT" && el.tagName !== "STYLE";
       });
       if (!kids.length) return;
-      kids.forEach(function (k) { c.insertBefore(makeInserter(c, k), k); });
-      c.appendChild(makeInserter(c, null));
+      // In a grid a strip would otherwise occupy a cell and shove the real
+      // content into the remaining columns; in a flex row it would sit beside
+      // its siblings. Either way it has to take a whole line.
+      var disp = getComputedStyle(c).display;
+      var span = function (s) {
+        if (disp === "grid" || disp === "inline-grid") { s.style.gridColumn = "1 / -1"; }
+        else if (disp === "flex" || disp === "inline-flex") {
+          var dir = getComputedStyle(c).flexDirection || "row";
+          if (dir.indexOf("column") !== 0) { s.style.flexBasis = "100%"; s.style.width = "100%"; }
+        }
+        return s;
+      };
+      kids.forEach(function (k) { c.insertBefore(span(makeInserter(c, k)), k); });
+      c.appendChild(span(makeInserter(c, null)));
     });
   }
 
