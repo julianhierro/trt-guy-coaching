@@ -969,6 +969,12 @@
     var containers = [root];
     Array.prototype.forEach.call(root.querySelectorAll("section, .wrap"), function (c) {
       if (c.closest(".jv-toolbar, .jv-outline, .jv-preview-overlay, [data-noedit]")) return;
+      // A grid or flex container lays its children out itself, and a strip
+      // dropped in among them becomes a cell of its own - a two-column card
+      // grid collapses to one column and the edit view stops matching the
+      // live page. Add sections around such a block, not inside it.
+      var disp = getComputedStyle(c).display;
+      if (disp === "grid" || disp === "inline-grid" || disp === "flex" || disp === "inline-flex") return;
       containers.push(c);
     });
     containers.forEach(function (c) {
@@ -980,20 +986,8 @@
             && el.tagName !== "SCRIPT" && el.tagName !== "STYLE";
       });
       if (!kids.length) return;
-      // In a grid a strip would otherwise occupy a cell and shove the real
-      // content into the remaining columns; in a flex row it would sit beside
-      // its siblings. Either way it has to take a whole line.
-      var disp = getComputedStyle(c).display;
-      var span = function (s) {
-        if (disp === "grid" || disp === "inline-grid") { s.style.gridColumn = "1 / -1"; }
-        else if (disp === "flex" || disp === "inline-flex") {
-          var dir = getComputedStyle(c).flexDirection || "row";
-          if (dir.indexOf("column") !== 0) { s.style.flexBasis = "100%"; s.style.width = "100%"; }
-        }
-        return s;
-      };
-      kids.forEach(function (k) { c.insertBefore(span(makeInserter(c, k)), k); });
-      c.appendChild(span(makeInserter(c, null)));
+      kids.forEach(function (k) { c.insertBefore(makeInserter(c, k), k); });
+      c.appendChild(makeInserter(c, null));
     });
   }
 
